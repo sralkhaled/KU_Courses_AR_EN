@@ -213,27 +213,14 @@
         .btn-action {
             padding: 4px 10px;
             font-size: 0.7rem;
-            margin: 0 3px;
             border-radius: 6px;
             cursor: pointer;
             border: none;
-        }
-
-        .btn-keep {
-            background: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .btn-change {
             background: #e3f2fd;
             color: #1e466e;
         }
 
-        .btn-keep:hover {
-            background: #c8e6c9;
-        }
-
-        .btn-change:hover {
+        .btn-action:hover {
             background: #bbdef5;
         }
 
@@ -257,13 +244,6 @@
         .page-info {
             font-size: 0.75rem;
             margin: 0 10px;
-        }
-
-        .arabic-text {
-            font-family: 'Amiri', 'Traditional Arabic', 'Segoe UI', serif;
-            font-size: 0.85rem;
-            direction: rtl;
-            text-align: right;
         }
 
         .stats-info {
@@ -316,7 +296,7 @@
             <img src="KU_Logo.png" alt="KU Logo" class="ku-logo" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%231e466e\'/%3E%3Ctext x=\'50\' y=\'55\' font-size=\'14\' fill=\'white\' text-anchor=\'middle\'%3EKU%3C/text%3E%3C/svg%3E'">
             <div class="title-section">
                 <div class="deanship">Deanship of Admission & Registration</div>
-                <div class="sub">Course Name Manager - English Editor</div>
+                <div class="sub">Course Name Manager - Editor</div>
             </div>
         </div>
         <div class="toolbar">
@@ -367,17 +347,17 @@
             <table id="coursesTable">
                 <thead>
                     <tr>
-                        <th style="width: 10%">Course Number</th>
-                        <th style="width: 25%">Course Name (Arabic) <span style="font-weight:normal; font-size:0.65rem;">(editable)</span></th>
-                        <th style="width: 30%">Course Name (English) <span style="font-weight:normal; font-size:0.65rem;">(editable)</span></th>
-                        <th style="width: 10%">Status</th>
-                        <th style="width: 25%">Actions</th>
+                        <th style="width: 12%">Course Number</th>
+                        <th style="width: 32%">Course Name (Arabic)</th>
+                        <th style="width: 38%">Course Name (English)</th>
+                        <th style="width: 8%">Status</th>
+                        <th style="width: 10%">Action</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
                     <tr><td colspan="5" style="text-align: center">Select a college and department to load courses</td></tr>
                 </tbody>
-            </table>
+            <table>
         </div>
 
         <div class="pagination" id="pagination">
@@ -682,7 +662,7 @@
             statusCell.innerHTML = getStatusBadge(course.isModified);
             
             var actionCell = row.insertCell(4);
-            actionCell.innerHTML = '<button class="btn-action btn-keep" onclick="window.updateCourseKeep(\'' + course.id.replace(/'/g, "\\'") + '\')">Keep Original</button> <button class="btn-action btn-change" onclick="window.updateCourseChange(\'' + course.id.replace(/'/g, "\\'") + '\', \'' + arabicInputId + '\', \'' + engInputId + '\')">Apply Change</button>';
+            actionCell.innerHTML = '<button class="btn-action" onclick="window.updateCourseChange(\'' + course.id.replace(/'/g, "\\'") + '\', \'' + arabicInputId + '\', \'' + engInputId + '\')">Apply</button>';
         }
         
         var totalPages = Math.ceil(currentDeptCourses.length / rowsPerPage);
@@ -690,23 +670,6 @@
         nextPageBtn.disabled = currentPage === totalPages || totalPages === 0;
         pageInfo.textContent = 'Page ' + currentPage + ' of ' + (totalPages || 1);
     }
-    
-    window.updateCourseKeep = function(courseId) {
-        var course = null;
-        for (var i = 0; i < masterCourses.length; i++) {
-            if (masterCourses[i].id === courseId) {
-                course = masterCourses[i];
-                break;
-            }
-        }
-        if (course) {
-            course.currentArabic = course.originalArabic;
-            course.currentEnglish = course.originalEnglish;
-            course.isModified = false;
-            filterByCollege();
-            filterByDepartment();
-        }
-    };
     
     window.updateCourseChange = function(courseId, arabicInputId, engInputId) {
         var arabicInput = document.getElementById(arabicInputId);
@@ -754,18 +717,14 @@
             return;
         }
         
-        var headers = ['Course Number', 'Original Arabic', 'Original English', 'Modified Arabic', 'Modified English'];
+        var headers = ['Course Number', 'Arabic Name', 'English Name', 'Version'];
         var rows = [];
         
         for (var i = 0; i < modifiedCourses.length; i++) {
             var c = modifiedCourses[i];
-            rows.push([
-                c.courseNum,
-                c.originalArabic,
-                c.originalEnglish,
-                c.currentArabic,
-                c.currentEnglish
-            ]);
+            rows.push([c.courseNum, c.originalArabic, c.originalEnglish, 'Original']);
+            rows.push([c.courseNum, c.currentArabic, c.currentEnglish, 'Modified']);
+            rows.push(['', '', '', '']);
         }
         
         var csvLines = [];
@@ -808,16 +767,15 @@
         var rowsHtml = '';
         for (var i = 0; i < modifiedCourses.length; i++) {
             var c = modifiedCourses[i];
-            rowsHtml += '<tr style="background: #f0f0f0;"><td colspan="5" style="background: #e0e0e0; font-weight: bold;">Course: ' + escapeHtml(c.courseNum) + '</td></tr>';
-            rowsHtml += '<tr><td style="border:1px solid #ccc; padding:8px;"><strong>Original</strong></td><td style="border:1px solid #ccc; padding:8px; text-align:right;">' + escapeHtml(c.originalArabic) + '</td><td style="border:1px solid #ccc; padding:8px;">' + escapeHtml(c.originalEnglish) + '</td><td colspan="2" style="border:1px solid #ccc; padding:8px;"></td></tr>';
-            rowsHtml += '<tr style="background: #fff3cd;"><td style="border:1px solid #ccc; padding:8px;"><strong>Modified</strong></td><td style="border:1px solid #ccc; padding:8px; text-align:right;">' + escapeHtml(c.currentArabic) + '</td><td style="border:1px solid #ccc; padding:8px;">' + escapeHtml(c.currentEnglish) + '</td><td colspan="2" style="border:1px solid #ccc; padding:8px;"></td></tr>';
-            rowsHtml += '<tr style="height: 10px;"><td colspan="5" style="border: none;"></td></tr>';
+            rowsHtml += '<tr style="background: #f0f0f0;"><td style="border:1px solid #aaa; padding:8px;"><strong>' + escapeHtml(c.courseNum) + '</strong></td><td style="border:1px solid #aaa; padding:8px; text-align:right;">' + escapeHtml(c.originalArabic) + '</td><td style="border:1px solid #aaa; padding:8px;">' + escapeHtml(c.originalEnglish) + '</td><td style="border:1px solid #aaa; padding:8px;">Original</td></tr>';
+            rowsHtml += '<tr style="background: #fff3cd;"><td style="border:1px solid #aaa; padding:8px;"><strong>' + escapeHtml(c.courseNum) + '</strong></td><td style="border:1px solid #aaa; padding:8px; text-align:right;">' + escapeHtml(c.currentArabic) + '</td><td style="border:1px solid #aaa; padding:8px;">' + escapeHtml(c.currentEnglish) + '</td><td style="border:1px solid #aaa; padding:8px;">Modified</td></tr>';
+            rowsHtml += '<tr style="height: 8px;"><td colspan="4" style="border: none;"></td></tr>';
         }
         
         var collegeName = collegeSelect.options[collegeSelect.selectedIndex]?.text || currentCollege;
         var deptName = deptSelect.options[deptSelect.selectedIndex]?.text || currentDeptCode;
         
-        printWindow.document.write('<!DOCTYPE html><html><head><title>Modified Courses - ' + collegeName + ' - ' + deptName + '</title><style>body { font-family: Arial, sans-serif; margin: 20px; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #aaa; padding: 8px; text-align: left; vertical-align: top; } th { background: #1e2f3f; color: white; } .original-row { background: #f9f9f9; } .modified-row { background: #fff3cd; } @media print { button { display: none; } }</style></head><body><h2>Course Modification Report</h2><p>College: ' + collegeName + ' | Department: ' + deptName + '</p><p>Generated: ' + new Date().toLocaleString() + ' | Total Modified Courses: ' + modifiedCourses.length + '</p><table><thead><tr><th width="15%">Version</th><th width="35%">Arabic Name</th><th width="35%">English Name</th><th width="7%"></th><th width="8%"></th></tr></thead><tbody>' + rowsHtml + '</tbody></table><script>window.onload = function() { window.print(); };</' + 'script></body></html>');
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Modified Courses - ' + collegeName + ' - ' + deptName + '</title><style>body { font-family: Arial, sans-serif; margin: 20px; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #aaa; padding: 8px; text-align: left; vertical-align: top; } th { background: #1e2f3f; color: white; } @media print { button { display: none; } }</style></head><body><h2>Course Modification Report</h2><p>College: ' + collegeName + ' | Department: ' + deptName + '</p><p>Generated: ' + new Date().toLocaleString() + ' | Total Modified Courses: ' + modifiedCourses.length + '</p><table><thead><tr><th width="15%">Course Number</th><th width="35%">Arabic Name</th><th width="35%">English Name</th><th width="15%">Version</th></tr></thead><tbody>' + rowsHtml + '</tbody></table><script>window.onload = function() { window.print(); };<\/script></body></html>');
         printWindow.document.close();
     }
     
