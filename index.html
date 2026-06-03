@@ -219,6 +219,7 @@
             margin-bottom: 15px;
             display: flex;
             flex-wrap: wrap;
+            flex-direction: row-reverse;
             justify-content: space-between;
             align-items: center;
             padding: 8px 15px;
@@ -475,14 +476,14 @@
 
     <div id="dataSection" class="hidden-section">
         <div class="stats-toolbar">
-            <div class="toolbar-buttons">
-                <button id="exportBtn" disabled>Export Modified Only</button>
-                <button id="printBtn" class="secondary" disabled>Print Modified Only</button>
-            </div>
-            <div class="stats-text" id="statsArea">
-                Select a college and department to view courses.
-            </div>
-        </div>
+    <div class="stats-text" id="statsArea">
+        Select a college and department to view courses.
+    </div>
+    <div class="toolbar-buttons">
+        <button id="exportBtn" disabled>Export Modified Only</button>
+        <button id="printBtn" class="secondary" disabled>Print Modified Only</button>
+    </div>
+</div>
 
         <div class="table-wrapper">
             <table id="coursesTable">
