@@ -170,16 +170,21 @@
             vertical-align: middle;
         }
 
-        .english-input {
+        .arabic-input, .english-input {
             width: 100%;
             padding: 6px 8px;
             border: 1px solid #ccc;
             border-radius: 6px;
             font-size: 0.75rem;
-            font-family: monospace;
         }
 
-        .english-input:focus {
+        .arabic-input {
+            font-family: 'Amiri', 'Traditional Arabic', 'Segoe UI', serif;
+            direction: rtl;
+            text-align: right;
+        }
+
+        .english-input:focus, .arabic-input:focus {
             outline: none;
             border-color: #1e466e;
             box-shadow: 0 0 0 2px rgba(30,70,110,0.1);
@@ -315,8 +320,8 @@
             </div>
         </div>
         <div class="toolbar">
-            <button id="exportBtn" disabled>Export to Excel</button>
-            <button id="printBtn" class="secondary" disabled>Print View</button>
+            <button id="exportBtn" disabled>Export Modified Only</button>
+            <button id="printBtn" class="secondary" disabled>Print Modified Only</button>
         </div>
     </div>
 
@@ -363,14 +368,14 @@
                 <thead>
                     <tr>
                         <th style="width: 10%">Course Number</th>
-                        <th style="width: 22%">Course Name (Arabic)</th>
+                        <th style="width: 25%">Course Name (Arabic) <span style="font-weight:normal; font-size:0.65rem;">(editable)</span></th>
                         <th style="width: 30%">Course Name (English) <span style="font-weight:normal; font-size:0.65rem;">(editable)</span></th>
                         <th style="width: 10%">Status</th>
-                        <th style="width: 28%">Actions</th>
+                        <th style="width: 25%">Actions</th>
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="5" style="text-align: center">Select a college and department to load courses</td><tr>
+                    <tr><td colspan="5" style="text-align: center">Select a college and department to load courses</td></tr>
                 </tbody>
             </table>
         </div>
@@ -470,7 +475,8 @@
                     deptCode: String(course['Department Code']),
                     deptName: course['Department Name'],
                     courseNum: course['Course Number'],
-                    courseNameAr: course['Course Name (AR)'],
+                    originalArabic: course['Course Name (AR)'],
+                    currentArabic: course['Course Name (AR)'],
                     originalEnglish: course['Course Name (EN)'],
                     currentEnglish: course['Course Name (EN)'],
                     isModified: false
@@ -587,8 +593,15 @@
         renderTable();
         updateStats();
         
-        exportBtn.disabled = currentDeptCourses.length === 0;
-        printBtn.disabled = currentDeptCourses.length === 0;
+        var hasModified = false;
+        for (var i = 0; i < currentDeptCourses.length; i++) {
+            if (currentDeptCourses[i].isModified) {
+                hasModified = true;
+                break;
+            }
+        }
+        exportBtn.disabled = !hasModified;
+        printBtn.disabled = !hasModified;
         
         dataSection.classList.remove('hidden-section');
         dataSection.classList.add('visible-section');
@@ -657,18 +670,19 @@
             var cell0 = row.insertCell(0);
             cell0.innerHTML = '<strong>' + escapeHtml(course.courseNum) + '</strong>';
             
-            var cell1 = row.insertCell(1);
-            cell1.innerHTML = '<div class="arabic-text">' + escapeHtml(course.courseNameAr) + '</div>';
+            var arabicCell = row.insertCell(1);
+            var arabicInputId = 'arabic_' + course.id.replace(/[^a-zA-Z0-9]/g, '_');
+            arabicCell.innerHTML = '<input type="text" id="' + arabicInputId + '" class="arabic-input" value="' + escapeHtml(course.currentArabic) + '">';
             
             var engCell = row.insertCell(2);
-            var inputId = 'eng_' + course.id.replace(/[^a-zA-Z0-9]/g, '_');
-            engCell.innerHTML = '<input type="text" id="' + inputId + '" class="english-input" value="' + escapeHtml(course.currentEnglish) + '">';
+            var engInputId = 'eng_' + course.id.replace(/[^a-zA-Z0-9]/g, '_');
+            engCell.innerHTML = '<input type="text" id="' + engInputId + '" class="english-input" value="' + escapeHtml(course.currentEnglish) + '">';
             
             var statusCell = row.insertCell(3);
             statusCell.innerHTML = getStatusBadge(course.isModified);
             
             var actionCell = row.insertCell(4);
-            actionCell.innerHTML = '<button class="btn-action btn-keep" onclick="window.updateCourseKeep(\'' + course.id.replace(/'/g, "\\'") + '\')">Keep Original</button> <button class="btn-action btn-change" onclick="window.updateCourseChange(\'' + course.id.replace(/'/g, "\\'") + '\', \'' + inputId + '\')">Apply Change</button>';
+            actionCell.innerHTML = '<button class="btn-action btn-keep" onclick="window.updateCourseKeep(\'' + course.id.replace(/'/g, "\\'") + '\')">Keep Original</button> <button class="btn-action btn-change" onclick="window.updateCourseChange(\'' + course.id.replace(/'/g, "\\'") + '\', \'' + arabicInputId + '\', \'' + engInputId + '\')">Apply Change</button>';
         }
         
         var totalPages = Math.ceil(currentDeptCourses.length / rowsPerPage);
@@ -686,6 +700,7 @@
             }
         }
         if (course) {
+            course.currentArabic = course.originalArabic;
             course.currentEnglish = course.originalEnglish;
             course.isModified = false;
             filterByCollege();
@@ -693,12 +708,15 @@
         }
     };
     
-    window.updateCourseChange = function(courseId, inputId) {
-        var inputElement = document.getElementById(inputId);
-        if (!inputElement) return;
+    window.updateCourseChange = function(courseId, arabicInputId, engInputId) {
+        var arabicInput = document.getElementById(arabicInputId);
+        var engInput = document.getElementById(engInputId);
+        if (!arabicInput || !engInput) return;
         
-        var newValue = inputElement.value.trim();
-        if (newValue === "") {
+        var newArabic = arabicInput.value.trim();
+        var newEnglish = engInput.value.trim();
+        
+        if (newEnglish === "") {
             alert("English name cannot be empty");
             return;
         }
@@ -711,25 +729,43 @@
             }
         }
         if (course) {
-            course.currentEnglish = newValue;
-            course.isModified = (newValue !== course.originalEnglish);
+            course.currentArabic = newArabic;
+            course.currentEnglish = newEnglish;
+            course.isModified = (newArabic !== course.originalArabic || newEnglish !== course.originalEnglish);
             filterByCollege();
             filterByDepartment();
         }
     };
     
+    function getModifiedCourses() {
+        var modified = [];
+        for (var i = 0; i < currentDeptCourses.length; i++) {
+            if (currentDeptCourses[i].isModified) {
+                modified.push(currentDeptCourses[i]);
+            }
+        }
+        return modified;
+    }
+    
     function exportToExcel() {
-        if (currentDeptCourses.length === 0) {
-            alert('No data to export');
+        var modifiedCourses = getModifiedCourses();
+        if (modifiedCourses.length === 0) {
+            alert('No modified courses to export');
             return;
         }
         
-        var headers = ['College Code', 'College Name', 'Department Code', 'Department Name', 'Course Number', 'Course Name (AR)', 'Course Name (EN)', 'Status'];
+        var headers = ['Course Number', 'Original Arabic', 'Original English', 'Modified Arabic', 'Modified English'];
         var rows = [];
-        for (var i = 0; i < currentDeptCourses.length; i++) {
-            var c = currentDeptCourses[i];
-            var status = c.isModified ? 'Modified' : 'Original';
-            rows.push([c.collegeCode, c.collegeName, c.deptCode, c.deptName, c.courseNum, c.courseNameAr, c.currentEnglish, status]);
+        
+        for (var i = 0; i < modifiedCourses.length; i++) {
+            var c = modifiedCourses[i];
+            rows.push([
+                c.courseNum,
+                c.originalArabic,
+                c.originalEnglish,
+                c.currentArabic,
+                c.currentEnglish
+            ]);
         }
         
         var csvLines = [];
@@ -751,14 +787,15 @@
         var link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         var deptName = deptSelect.options[deptSelect.selectedIndex]?.text.replace(/[^a-zA-Z0-9]/g, '_') || 'department';
-        link.download = 'courses_' + currentCollege + '_' + deptName + '_' + new Date().toISOString().slice(0,19) + '.csv';
+        link.download = 'modified_courses_' + currentCollege + '_' + deptName + '_' + new Date().toISOString().slice(0,19) + '.csv';
         link.click();
         URL.revokeObjectURL(link.href);
     }
     
     function printView() {
-        if (currentDeptCourses.length === 0) {
-            alert('No data to print');
+        var modifiedCourses = getModifiedCourses();
+        if (modifiedCourses.length === 0) {
+            alert('No modified courses to print');
             return;
         }
         
@@ -769,20 +806,18 @@
         }
         
         var rowsHtml = '';
-        for (var i = 0; i < currentDeptCourses.length; i++) {
-            var c = currentDeptCourses[i];
-            var status = c.isModified ? 'Modified' : 'Original';
-            rowsHtml += '<tr><td style="border:1px solid #ccc; padding:8px;">' + escapeHtml(c.courseNum) + '</td><td style="border:1px solid #ccc; padding:8px; text-align:right;">' + escapeHtml(c.courseNameAr) + '</td><td style="border:1px solid #ccc; padding:8px;">' + escapeHtml(c.currentEnglish) + '</td><td style="border:1px solid #ccc; padding:8px;">' + status + '</td></tr>';
+        for (var i = 0; i < modifiedCourses.length; i++) {
+            var c = modifiedCourses[i];
+            rowsHtml += '<tr style="background: #f0f0f0;"><td colspan="5" style="background: #e0e0e0; font-weight: bold;">Course: ' + escapeHtml(c.courseNum) + '</td></tr>';
+            rowsHtml += '<tr><td style="border:1px solid #ccc; padding:8px;"><strong>Original</strong></td><td style="border:1px solid #ccc; padding:8px; text-align:right;">' + escapeHtml(c.originalArabic) + '</td><td style="border:1px solid #ccc; padding:8px;">' + escapeHtml(c.originalEnglish) + '</td><td colspan="2" style="border:1px solid #ccc; padding:8px;"></td></tr>';
+            rowsHtml += '<tr style="background: #fff3cd;"><td style="border:1px solid #ccc; padding:8px;"><strong>Modified</strong></td><td style="border:1px solid #ccc; padding:8px; text-align:right;">' + escapeHtml(c.currentArabic) + '</td><td style="border:1px solid #ccc; padding:8px;">' + escapeHtml(c.currentEnglish) + '</td><td colspan="2" style="border:1px solid #ccc; padding:8px;"></td></tr>';
+            rowsHtml += '<tr style="height: 10px;"><td colspan="5" style="border: none;"></td></tr>';
         }
         
         var collegeName = collegeSelect.options[collegeSelect.selectedIndex]?.text || currentCollege;
         var deptName = deptSelect.options[deptSelect.selectedIndex]?.text || currentDeptCode;
-        var modifiedCount = 0;
-        for (var i = 0; i < currentDeptCourses.length; i++) {
-            if (currentDeptCourses[i].isModified) modifiedCount++;
-        }
         
-        printWindow.document.write('<!DOCTYPE html><html><head><title>Courses - ' + collegeName + ' - ' + deptName + '</title><style>body { font-family: Arial, sans-serif; margin: 20px; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #aaa; padding: 8px; text-align: left; } th { background: #f0f0f0; } .modified-row { background: #fff3cd; } @media print { button { display: none; } }</style></head><body><h2>Course Report</h2><p>College: ' + collegeName + ' | Department: ' + deptName + '</p><p>Generated: ' + new Date().toLocaleString() + ' | Total: ' + currentDeptCourses.length + ' courses | Modified: ' + modifiedCount + '</p><table><thead><tr><th>Course Number</th><th>Arabic Name</th><th>English Name</th><th>Status</th></tr></thead><tbody>' + rowsHtml + '</tbody></table><script>window.onload = function() { window.print(); };</' + 'script></body></html>');
+        printWindow.document.write('<!DOCTYPE html><html><head><title>Modified Courses - ' + collegeName + ' - ' + deptName + '</title><style>body { font-family: Arial, sans-serif; margin: 20px; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #aaa; padding: 8px; text-align: left; vertical-align: top; } th { background: #1e2f3f; color: white; } .original-row { background: #f9f9f9; } .modified-row { background: #fff3cd; } @media print { button { display: none; } }</style></head><body><h2>Course Modification Report</h2><p>College: ' + collegeName + ' | Department: ' + deptName + '</p><p>Generated: ' + new Date().toLocaleString() + ' | Total Modified Courses: ' + modifiedCourses.length + '</p><table><thead><tr><th width="15%">Version</th><th width="35%">Arabic Name</th><th width="35%">English Name</th><th width="7%"></th><th width="8%"></th></tr></thead><tbody>' + rowsHtml + '</tbody></table><script>window.onload = function() { window.print(); };</' + 'script></body></html>');
         printWindow.document.close();
     }
     
