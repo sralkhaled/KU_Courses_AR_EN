@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
-    <title>Course Name Manager - English Editor</title>
+    <title>Updating Course Titles in Arabic and English</title>
     <style>
         * {
             box-sizing: border-box;
@@ -17,7 +17,7 @@
         }
 
         .container {
-            max-width: 1900px;
+            max-width: 1400px;
             margin: 0 auto;
         }
 
@@ -53,9 +53,10 @@
         }
 
         .title-section .sub {
-            font-size: 0.9rem;
-            font-weight: normal;
-            color: #2c3e50;
+            font-size: 1rem;
+            font-weight: 600;
+            color: #1e466e;
+            margin-top: 4px;
         }
 
         .toolbar {
@@ -86,6 +87,100 @@
         button:disabled {
             background: #ccc;
             cursor: not-allowed;
+        }
+
+        /* Info Section - Two Columns */
+        .info-section {
+            background: white;
+            border-radius: 16px;
+            padding: 0;
+            margin-bottom: 24px;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+
+        .info-title {
+            background: #1e466e;
+            color: white;
+            padding: 14px 24px;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .info-columns {
+            display: flex;
+            flex-wrap: wrap;
+        }
+
+        .info-column {
+            flex: 1;
+            padding: 20px 24px;
+            min-width: 280px;
+        }
+
+        .info-column.arabic {
+            background: #f8fbfe;
+            border-left: 1px solid #e0e7ef;
+            direction: rtl;
+            font-family: 'Amiri', 'Traditional Arabic', 'Segoe UI', serif;
+        }
+
+        .info-column.english {
+            direction: ltr;
+        }
+
+        .info-column h3 {
+            font-size: 1rem;
+            font-weight: 700;
+            margin-top: 0;
+            margin-bottom: 16px;
+            color: #1e466e;
+            border-bottom: 2px solid #cbd5e1;
+            padding-bottom: 8px;
+        }
+
+        .info-column.arabic h3 {
+            border-bottom-color: #cbd5e1;
+            text-align: right;
+        }
+
+        .info-column p {
+            font-size: 0.85rem;
+            line-height: 1.6;
+            margin-bottom: 14px;
+            color: #2c3e50;
+        }
+
+        .info-column.arabic p {
+            font-size: 0.9rem;
+            text-align: right;
+        }
+
+        .info-column .notes-title {
+            font-weight: 700;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            color: #c62828;
+        }
+
+        .info-column ul {
+            margin: 0;
+            padding-left: 20px;
+        }
+
+        .info-column.arabic ul {
+            padding-right: 20px;
+            padding-left: 0;
+        }
+
+        .info-column li {
+            font-size: 0.8rem;
+            margin-bottom: 6px;
+            line-height: 1.5;
+        }
+
+        .info-column.arabic li {
+            font-size: 0.85rem;
         }
 
         .selection-area {
@@ -140,7 +235,7 @@
         .table-wrapper {
             overflow-x: auto;
             border-radius: 14px;
-            max-height: 600px;
+            max-height: 550px;
             overflow-y: auto;
         }
 
@@ -287,6 +382,16 @@
         .visible-section {
             display: block;
         }
+
+        @media (max-width: 800px) {
+            .info-columns {
+                flex-direction: column;
+            }
+            .info-column.arabic {
+                border-left: none;
+                border-top: 1px solid #e0e7ef;
+            }
+        }
     </style>
 </head>
 <body>
@@ -296,12 +401,42 @@
             <img src="KU_Logo.png" alt="KU Logo" class="ku-logo" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%231e466e\'/%3E%3Ctext x=\'50\' y=\'55\' font-size=\'14\' fill=\'white\' text-anchor=\'middle\'%3EKU%3C/text%3E%3C/svg%3E'">
             <div class="title-section">
                 <div class="deanship">Deanship of Admission & Registration</div>
-                <div class="sub">Course Name Manager - Editor</div>
+                <div class="sub">Updating Course Titles in Arabic and English</div>
             </div>
         </div>
         <div class="toolbar">
             <button id="exportBtn" disabled>Export Modified Only</button>
             <button id="printBtn" class="secondary" disabled>Print Modified Only</button>
+        </div>
+    </div>
+
+    <!-- Bilingual Information Section -->
+    <div class="info-section">
+        <div class="info-columns">
+            <div class="info-column english">
+                <h3>Instructions</h3>
+                <p>This service enables academic departments to review the course titles listed in the registration system and submit any required updates to the Arabic and/or English titles. The purpose is to ensure the accuracy and consistency of course information as it appears in student records, transcripts, and other academic documents.</p>
+                <p>Departments are requested to enter the required updates to the Arabic and/or English course titles, while ensuring that the revised titles fully correspond to the titles approved by Academic Affairs, with no discrepancy or conflict between the submitted titles and the officially approved records.</p>
+                <p>After completing and reviewing the required updates, departments should download the file in Excel format, print it after departmental approval, and submit it to the Deanship of Admission and Registration as a soft and hard copy for the necessary action to update the course titles in the registration system.</p>
+                <div class="notes-title">Important Notes:</div>
+                <ul>
+                    <li>Academic departments are responsible for verifying the accuracy of the submitted course titles and ensuring their conformity with the official approvals issued by Academic Affairs.</li>
+                    <li>Any proposed update that does not match the officially approved course title, or that lacks the required departmental approval, will not be considered.</li>
+                    <li>Arabic and English course titles must be clear, complete, and free from spelling errors or unapproved abbreviations.</li>
+                </ul>
+            </div>
+            <div class="info-column arabic">
+                <h3>الإرشادات</h3>
+                <p>تهدف هذه الخدمة إلى تمكين الأقسام العلمية من مراجعة مسميات مقرراتها في نظام التسجيل، وتقديم أي تعديلات مطلوبة على المسميات باللغتين العربية والإنجليزية، بما يضمن دقة البيانات واتساقها في صحيفة الطالب والسجلات الأكاديمية.</p>
+                <p>يرجى من القسم العلمي إدخال التعديلات المطلوبة على مسمى المقرر باللغة العربية و/أو اللغة الإنجليزية، مع التأكد من أن المسميات المعدلة مطابقة لما تم اعتماده من قبل الشؤون العلمية، ودون أي اختلاف أو تعارض مع المسميات المعتمدة رسمياً.</p>
+                <p>بعد الانتهاء من إدخال التعديلات ومراجعتها، يرجى تحميل الملف بصيغة Excel، وطباعته بعد اعتماده من القسم، ثم إرساله إلى عمادة القبول والتسجيل لاتخاذ ما يلزم بشأن تحديث المسميات في نظام التسجيل.</p>
+                <div class="notes-title">ملاحظات مهمة:</div>
+                <ul>
+                    <li>تتحمل الأقسام العلمية مسؤولية التأكد من صحة المسميات المدخلة ومطابقتها للاعتمادات الرسمية الصادرة عن الشؤون العلمية.</li>
+                    <li>لن يتم النظر في أي تعديل لا يتطابق مع المسميات المعتمدة رسمياً أو يفتقر إلى الاعتماد المطلوب من القسم العلمي.</li>
+                    <li>يجب أن تكون المسميات العربية والإنجليزية واضحة وكاملة وخالية من الأخطاء الإملائية أو الاختصارات غير المعتمدة.</li>
+                </ul>
+            </div>
         </div>
     </div>
 
@@ -357,7 +492,7 @@
                 <tbody id="tableBody">
                     <tr><td colspan="5" style="text-align: center">Select a college and department to load courses</td></tr>
                 </tbody>
-            <table>
+             </table>
         </div>
 
         <div class="pagination" id="pagination">
