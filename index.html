@@ -59,17 +59,6 @@
             margin-top: 4px;
         }
 
-        .toolbar {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 12px;
-            align-items: center;
-            background: white;
-            padding: 8px 20px;
-            border-radius: 40px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
         button {
             background: #1e466e;
             color: white;
@@ -78,6 +67,7 @@
             border-radius: 8px;
             cursor: pointer;
             font-weight: 500;
+            font-size: 0.75rem;
         }
 
         button.secondary {
@@ -89,7 +79,6 @@
             cursor: not-allowed;
         }
 
-        /* Info Section - Two Columns */
         .info-section {
             background: white;
             border-radius: 16px;
@@ -97,14 +86,6 @@
             margin-bottom: 24px;
             overflow: hidden;
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-        }
-
-        .info-title {
-            background: #1e466e;
-            color: white;
-            padding: 14px 24px;
-            font-size: 1.1rem;
-            font-weight: 600;
         }
 
         .info-columns {
@@ -232,6 +213,29 @@
             cursor: not-allowed;
         }
 
+        .stats-toolbar {
+            background: #e6f7ff;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            align-items: center;
+            padding: 8px 15px;
+            gap: 12px;
+        }
+
+        .toolbar-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .stats-text {
+            font-size: 0.75rem;
+            color: #0050b3;
+            font-weight: 500;
+        }
+
         .table-wrapper {
             overflow-x: auto;
             border-radius: 14px;
@@ -341,15 +345,6 @@
             margin: 0 10px;
         }
 
-        .stats-info {
-            background: #e6f7ff;
-            padding: 10px 15px;
-            border-radius: 8px;
-            margin-bottom: 15px;
-            font-size: 0.75rem;
-            color: #0050b3;
-        }
-
         .loading-overlay {
             text-align: center;
             padding: 40px;
@@ -391,6 +386,16 @@
                 border-left: none;
                 border-top: 1px solid #e0e7ef;
             }
+            .stats-toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            .toolbar-buttons {
+                justify-content: center;
+            }
+            .stats-text {
+                text-align: center;
+            }
         }
     </style>
 </head>
@@ -404,13 +409,8 @@
                 <div class="sub">Updating Course Titles in Arabic and English</div>
             </div>
         </div>
-        <div class="toolbar">
-            <button id="exportBtn" disabled>Export Modified Only</button>
-            <button id="printBtn" class="secondary" disabled>Print Modified Only</button>
-        </div>
     </div>
 
-    <!-- Bilingual Information Section -->
     <div class="info-section">
         <div class="info-columns">
             <div class="info-column english">
@@ -474,8 +474,14 @@
     </div>
 
     <div id="dataSection" class="hidden-section">
-        <div class="stats-info" id="statsArea">
-            Select a college and department to view courses.
+        <div class="stats-toolbar">
+            <div class="toolbar-buttons">
+                <button id="exportBtn" disabled>Export Modified Only</button>
+                <button id="printBtn" class="secondary" disabled>Print Modified Only</button>
+            </div>
+            <div class="stats-text" id="statsArea">
+                Select a college and department to view courses.
+            </div>
         </div>
 
         <div class="table-wrapper">
@@ -492,7 +498,7 @@
                 <tbody id="tableBody">
                     <tr><td colspan="5" style="text-align: center">Select a college and department to load courses</td></tr>
                 </tbody>
-             </table>
+            </table>
         </div>
 
         <div class="pagination" id="pagination">
