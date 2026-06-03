@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
     <title>Course Name Manager - English Editor</title>
     <style>
-        /* ========== RESET & BASE (EXACT STYLE FROM SCHEDULE MANAGER) ========== */
+        /* ========== RESET & BASE ========== */
         * {
             box-sizing: border-box;
             font-family: system-ui, 'Segoe UI', 'Inter', 'Roboto', sans-serif;
@@ -22,7 +22,7 @@
             margin: 0 auto;
         }
 
-        /* ========== HEADER (MATCHES SCHEDULE MANAGER EXACTLY) ========== */
+        /* ========== HEADER ========== */
         .header {
             display: flex;
             flex-wrap: wrap;
@@ -71,7 +71,7 @@
             box-shadow: 0 1px 3px rgba(0,0,0,0.1);
         }
 
-        /* ========== BUTTONS (EXACT STYLE) ========== */
+        /* ========== BUTTONS ========== */
         button {
             background: #1e466e;
             color: white;
@@ -95,7 +95,7 @@
             cursor: not-allowed;
         }
 
-        /* ========== SELECTION AREA (MATCHES PANEL STYLES) ========== */
+        /* ========== SELECTION AREA ========== */
         .selection-area {
             background: white;
             border-radius: 16px;
@@ -142,10 +142,10 @@
 
         select:disabled {
             background: #f5f5f5;
-            cursor: wait;
+            cursor: not-allowed;
         }
 
-        /* ========== TABLE (EXACT STYLE FROM SCHEDULE MANAGER) ========== */
+        /* ========== TABLE ========== */
         .table-wrapper {
             overflow-x: auto;
             border-radius: 14px;
@@ -273,32 +273,23 @@
             color: #0050b3;
         }
 
-        .progress-bar {
-            width: 100%;
-            height: 3px;
-            background: #e0e0e0;
-            margin-top: 8px;
-            display: none;
-            border-radius: 3px;
-            overflow: hidden;
-        }
-
-        .progress-fill {
-            height: 100%;
-            background: #2e7d32;
-            width: 0%;
-            transition: width 0.3s;
+        .loading-overlay {
+            text-align: center;
+            padding: 40px;
+            background: white;
+            border-radius: 16px;
+            color: #1e466e;
         }
 
         .loading-spinner {
             display: inline-block;
-            width: 16px;
-            height: 16px;
-            border: 2px solid #f3f3f3;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #e0e0e0;
             border-top: 2px solid #1e466e;
             border-radius: 50%;
             animation: spin 0.8s linear infinite;
-            margin-right: 8px;
+            margin-right: 10px;
             vertical-align: middle;
         }
 
@@ -315,16 +306,19 @@
             display: block;
         }
 
-        .department-hint {
+        .status-badge {
+            background: #e8f5e9;
+            color: #2e7d32;
+            padding: 4px 12px;
+            border-radius: 20px;
             font-size: 0.7rem;
-            color: #6c757d;
-            margin-top: 5px;
+            font-weight: 500;
         }
     </style>
 </head>
 <body>
 <div class="container">
-    <!-- HEADER WITH KU LOGO (EXACT STYLE AS SCHEDULE MANAGER) -->
+    <!-- HEADER -->
     <div class="header">
         <div class="header-left">
             <img src="KU_Logo.png" alt="KU Logo" class="ku-logo" onerror="this.src='data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' viewBox=\'0 0 100 100\'%3E%3Crect width=\'100\' height=\'100\' fill=\'%231e466e\'/%3E%3Ctext x=\'50\' y=\'55\' font-size=\'14\' fill=\'white\' text-anchor=\'middle\'%3EKU%3C/text%3E%3C/svg%3E'">
@@ -364,12 +358,11 @@
                     <option value="99">Language Center</option>
                 </select>
             </div>
-            <div class="selection-group">
+            <div class="selection-group" id="deptGroup" style="display: none;">
                 <label>Select Department</label>
-                <select id="deptSelect" disabled>
-                    <option value="">-- First select a college --</option>
+                <select id="deptSelect">
+                    <option value="">-- Select a Department --</option>
                 </select>
-                <div class="department-hint" id="deptHint"></div>
             </div>
         </div>
     </div>
@@ -378,10 +371,6 @@
     <div id="dataSection" class="hidden-section">
         <div class="stats-info" id="statsArea">
             Select a college and department to view courses.
-        </div>
-
-        <div class="progress-bar" id="progressBar">
-            <div class="progress-fill" id="progressFill"></div>
         </div>
 
         <div class="table-wrapper">
@@ -395,7 +384,7 @@
                     </tr>
                 </thead>
                 <tbody id="tableBody">
-                    <tr><td colspan="4" style="text-align: center">Select a college and department to load courses</td></tr>
+                    <tr><td colspan="4" style="text-align: center">Select a college and department to load courses</td>
                 </tbody>
             </table>
         </div>
@@ -406,36 +395,36 @@
             <button id="nextPageBtn" disabled>Next</button>
         </div>
     </div>
+    
+    <!-- Initial loading message (visible while fetching data in background) -->
+    <div id="initialLoading" class="loading-overlay">
+        <span class="loading-spinner"></span> Loading course database for the first time... This may take a few seconds.
+    </div>
 </div>
 
 <script>
     // ========== DATA CONFIGURATION ==========
     const allCoursesUrl = 'https://api.allorigins.win/raw?url=' + encodeURIComponent('https://docs.google.com/spreadsheets/d/e/2PACX-1vSrdJr4Yc49nuTL3tyJTN0jG9XfO5aoWref3CGv2Z8RmsgSWYgieOoOKyudfan1J2NVaii61WLRT-87/pub?output=csv');
     
-    const collegeDataUrls = {
-        '3': allCoursesUrl, '4': allCoursesUrl, '5': allCoursesUrl, '6': allCoursesUrl,
-        '7': allCoursesUrl, '8': allCoursesUrl, '9': allCoursesUrl, '10': allCoursesUrl,
-        '11': allCoursesUrl, '12': allCoursesUrl, '13': allCoursesUrl, '14': allCoursesUrl,
-        '16': allCoursesUrl, '18': allCoursesUrl, '19': allCoursesUrl, '99': allCoursesUrl
-    };
-    
     // Global state
-    let allCourses = [];           // All courses for the selected college
-    let currentDeptCourses = [];  // Courses filtered by selected department
+    let masterCourses = [];        // All courses from the entire CSV (loaded once)
+    let currentCollegeCourses = []; // Courses filtered by selected college
+    let currentDeptCourses = [];    // Courses filtered by selected department
     let currentPage = 1;
     const rowsPerPage = 50;
     let currentCollege = '';
     let currentDeptCode = '';
-    let isLoading = false;
+    let isDataReady = false;
     
-    // Cache for loaded college data to avoid refetching
-    let collegeDataCache = new Map(); // key: collegeCode, value: array of courses
+    // Department cache per college (to avoid recomputing)
+    let collegeDepartmentsCache = new Map(); // collegeCode -> array of {code, name}
 
     // DOM Elements
     const collegeSelect = document.getElementById('collegeSelect');
+    const deptGroup = document.getElementById('deptGroup');
     const deptSelect = document.getElementById('deptSelect');
-    const deptHint = document.getElementById('deptHint');
     const dataSection = document.getElementById('dataSection');
+    const initialLoading = document.getElementById('initialLoading');
     const exportBtn = document.getElementById('exportBtn');
     const printBtn = document.getElementById('printBtn');
     const statsArea = document.getElementById('statsArea');
@@ -443,8 +432,6 @@
     const prevPageBtn = document.getElementById('prevPageBtn');
     const nextPageBtn = document.getElementById('nextPageBtn');
     const pageInfo = document.getElementById('pageInfo');
-    const progressBar = document.getElementById('progressBar');
-    const progressFill = document.getElementById('progressFill');
 
     // Parse CSV line (handles quoted fields)
     function parseCSVLine(line) {
@@ -468,7 +455,7 @@
     }
 
     // Parse CSV with headers
-    function parseCSV(csvText, onProgress) {
+    function parseCSV(csvText) {
         const lines = csvText.trim().split(/\r?\n/);
         if (lines.length < 2) {
             throw new Error('CSV must have headers and at least one data row');
@@ -479,18 +466,13 @@
         
         const missing = requiredHeaders.filter(h => !headers.includes(h));
         if (missing.length > 0) {
-            throw new Error(`Missing required columns: ${missing.join(', ')}. Found: ${headers.join(', ')}`);
+            throw new Error(`Missing required columns: ${missing.join(', ')}`);
         }
         
         const courses = [];
-        const totalLines = lines.length - 1;
         
         for (let i = 1; i < lines.length; i++) {
             if (!lines[i].trim()) continue;
-            
-            if (onProgress && i % 500 === 0) {
-                onProgress(Math.floor((i / totalLines) * 100));
-            }
             
             const values = parseCSVLine(lines[i]);
             
@@ -517,113 +499,147 @@
             }
         }
         
-        if (onProgress) onProgress(100);
         return courses;
     }
 
-    // Load college data from URL or cache
-    async function loadCollegeData(collegeCode) {
-        // Check cache first
-        if (collegeDataCache.has(collegeCode)) {
-            return collegeDataCache.get(collegeCode);
-        }
-        
-        const url = collegeDataUrls[collegeCode];
-        if (!url) {
-            throw new Error('No data URL configured for this college');
-        }
-        
-        progressBar.style.display = 'block';
-        progressFill.style.width = '0%';
+    // Load master data once on page load (background)
+    async function loadMasterData() {
+        initialLoading.style.display = 'block';
+        dataSection.classList.add('hidden-section');
         
         try {
-            const response = await fetch(url);
+            const response = await fetch(allCoursesUrl);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const text = await response.text();
             
-            progressFill.style.width = '30%';
+            const allCourses = parseCSV(text);
+            masterCourses = allCourses;
+            isDataReady = true;
             
-            await new Promise(r => setTimeout(r, 10));
+            console.log(`Loaded ${masterCourses.length} courses successfully`);
             
-            const allParsedCourses = parseCSV(text, (percent) => {
-                progressFill.style.width = `${30 + (percent * 0.7)}%`;
-            });
+            // Hide loading message, show selection area ready
+            initialLoading.style.display = 'none';
             
-            // Filter by college code
-            const collegeCourses = allParsedCourses.filter(c => c.collegeCode === collegeCode);
+            // Pre-build department caches for all colleges that exist in data
+            buildDepartmentCaches();
             
-            // Store in cache
-            collegeDataCache.set(collegeCode, collegeCourses);
-            progressBar.style.display = 'none';
+            // Enable college selection
+            collegeSelect.disabled = false;
             
-            return collegeCourses;
         } catch (error) {
-            progressBar.style.display = 'none';
-            throw error;
+            console.error('Failed to load master data:', error);
+            initialLoading.innerHTML = `<span style="color: #d32f2f;">Failed to load course data: ${error.message}. Please refresh the page.</span>`;
         }
     }
-
-    // Update department dropdown based on loaded courses
-    function updateDepartmentDropdown(courses) {
-        const departments = new Map();
-        courses.forEach(course => {
-            const key = `${course.deptCode}|${course.collegeCode}`;
-            if (!departments.has(key)) {
-                departments.set(key, { 
-                    code: course.deptCode, 
-                    name: course.deptName 
-                });
+    
+    // Build department cache for each college from master data
+    function buildDepartmentCaches() {
+        const collegeMap = new Map(); // collegeCode -> Map of deptCode -> deptName
+        
+        masterCourses.forEach(course => {
+            if (!collegeMap.has(course.collegeCode)) {
+                collegeMap.set(course.collegeCode, new Map());
+            }
+            const deptMap = collegeMap.get(course.collegeCode);
+            if (!deptMap.has(course.deptCode)) {
+                deptMap.set(course.deptCode, course.deptName);
             }
         });
         
-        deptSelect.innerHTML = '<option value="">-- Select a Department --</option>';
-        const sortedDepts = Array.from(departments.values())
-            .sort((a, b) => a.name.localeCompare(b.name));
-        
-        sortedDepts.forEach(dept => {
-            deptSelect.appendChild(new Option(`${dept.name} (${dept.code})`, dept.code));
-        });
-        
-        if (sortedDepts.length === 0) {
-            deptHint.textContent = 'No departments found for this college.';
-            deptSelect.disabled = true;
-        } else {
-            deptHint.textContent = `${sortedDepts.length} department(s) available. Select one to view courses.`;
-            deptSelect.disabled = false;
+        // Convert to arrays for easier use
+        for (const [collegeCode, deptMap] of collegeMap.entries()) {
+            const departments = Array.from(deptMap.entries()).map(([code, name]) => ({
+                code: code,
+                name: name
+            })).sort((a, b) => a.name.localeCompare(b.name));
+            collegeDepartmentsCache.set(collegeCode, departments);
         }
     }
-
-    // Load courses for selected department
-    function loadDepartmentCourses() {
-        if (!currentDeptCode || allCourses.length === 0) {
-            currentDeptCourses = [];
+    
+    // Update department dropdown based on selected college (instantly, no loading)
+    function updateDepartmentDropdown() {
+        if (!currentCollege) {
+            deptGroup.style.display = 'none';
             return;
         }
         
-        currentDeptCourses = allCourses.filter(course => course.deptCode === currentDeptCode);
+        const departments = collegeDepartmentsCache.get(currentCollege) || [];
+        
+        if (departments.length === 0) {
+            deptGroup.style.display = 'block';
+            deptSelect.innerHTML = '<option value="">-- No departments found --</option>';
+            deptSelect.disabled = true;
+            return;
+        }
+        
+        deptGroup.style.display = 'block';
+        deptSelect.innerHTML = '<option value="">-- Select a Department --</option>';
+        
+        departments.forEach(dept => {
+            deptSelect.appendChild(new Option(`${dept.name} (${dept.code})`, dept.code));
+        });
+        
+        deptSelect.disabled = false;
+    }
+    
+    // Filter courses by college (instant, from master data)
+    function filterByCollege() {
+        if (!currentCollege || masterCourses.length === 0) {
+            currentCollegeCourses = [];
+            return;
+        }
+        
+        currentCollegeCourses = masterCourses.filter(course => course.collegeCode === currentCollege);
+    }
+    
+    // Filter by department and render
+    function filterByDepartment() {
+        if (!currentDeptCode || currentCollegeCourses.length === 0) {
+            currentDeptCourses = [];
+            renderTable();
+            updateStats();
+            exportBtn.disabled = true;
+            printBtn.disabled = true;
+            return;
+        }
+        
+        currentDeptCourses = currentCollegeCourses.filter(course => course.deptCode === currentDeptCode);
         currentPage = 1;
         renderTable();
         updateStats();
         
-        // Enable export/print if we have data
+        // Enable export/print buttons
         exportBtn.disabled = currentDeptCourses.length === 0;
         printBtn.disabled = currentDeptCourses.length === 0;
+        
+        // Show data section
+        dataSection.classList.remove('hidden-section');
+        dataSection.classList.add('visible-section');
     }
-
-    // Update stats display
+    
     function updateStats() {
         const modifiedCount = currentDeptCourses.filter(c => c.isModified).length;
         const totalFiltered = currentDeptCourses.length;
-        const totalAll = allCourses.length;
-        const totalPages = Math.ceil(totalFiltered / rowsPerPage) || 1;
         
-        const selectedDeptName = deptSelect.options[deptSelect.selectedIndex]?.text || currentDeptCode;
-        statsArea.innerHTML = `Department: ${selectedDeptName} | ${totalFiltered} courses | Modified: ${modifiedCount} course(s) | Page ${currentPage} of ${totalPages}`;
+        if (!currentCollege) {
+            statsArea.innerHTML = 'Select a college to begin';
+            return;
+        }
+        
+        if (!currentDeptCode) {
+            statsArea.innerHTML = `College selected: ${collegeSelect.options[collegeSelect.selectedIndex]?.text || currentCollege} | Please select a department to view courses`;
+            return;
+        }
+        
+        const totalPages = Math.ceil(totalFiltered / rowsPerPage) || 1;
+        const deptName = deptSelect.options[deptSelect.selectedIndex]?.text || currentDeptCode;
+        statsArea.innerHTML = `${deptName} | ${totalFiltered} courses | Modified: ${modifiedCount} | Page ${currentPage} of ${totalPages}`;
     }
     
     function renderTable() {
         if (currentDeptCourses.length === 0) {
-            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center">No courses found for this department. Select a different department.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="4" style="text-align: center">No courses found for this department</td></tr>';
             prevPageBtn.disabled = true;
             nextPageBtn.disabled = true;
             pageInfo.textContent = 'Page 1 of 1';
@@ -662,13 +678,14 @@
     }
     
     window.updateCourseKeep = function(courseId) {
-        const course = allCourses.find(c => c.id === courseId);
+        // Find course in masterCourses (the source of truth)
+        const course = masterCourses.find(c => c.id === courseId);
         if (course) {
             course.currentEnglish = course.originalEnglish;
             course.isModified = false;
-            // Also update in currentDeptCourses reference (same objects)
-            renderTable();
-            updateStats();
+            // Re-filter to refresh the view
+            filterByCollege();
+            filterByDepartment();
         }
     };
     
@@ -682,12 +699,13 @@
             return;
         }
         
-        const course = allCourses.find(c => c.id === courseId);
+        const course = masterCourses.find(c => c.id === courseId);
         if (course) {
             course.currentEnglish = newValue;
             course.isModified = (newValue !== course.originalEnglish);
-            renderTable();
-            updateStats();
+            // Re-filter to refresh the view
+            filterByCollege();
+            filterByDepartment();
         }
     };
     
@@ -726,7 +744,7 @@
         const blob = new Blob(["\uFEFF" + csvContent], { type: "text/csv;charset=utf-8;" });
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        const deptName = deptSelect.options[deptSelect.selectedIndex]?.text.replace(/[^a-zA0-9]/g, '_') || 'department';
+        const deptName = deptSelect.options[deptSelect.selectedIndex]?.text.replace(/[^a-zA-Z0-9]/g, '_') || 'department';
         link.download = `courses_${currentCollege}_${deptName}_${new Date().toISOString().slice(0,19)}.csv`;
         link.click();
         URL.revokeObjectURL(link.href);
@@ -755,12 +773,13 @@
             `;
         });
         
+        const collegeName = collegeSelect.options[collegeSelect.selectedIndex]?.text || currentCollege;
         const deptName = deptSelect.options[deptSelect.selectedIndex]?.text || currentDeptCode;
         
         printWindow.document.write(`
             <!DOCTYPE html>
             <html>
-            <head><title>Course Export - ${currentCollege} - ${deptName}</title>
+            <head><title>Courses - ${collegeName} - ${deptName}</title>
             <style>
                 body { font-family: Arial, sans-serif; margin: 20px; }
                 table { border-collapse: collapse; width: 100%; }
@@ -770,8 +789,8 @@
             </style>
             </head>
             <body>
-            <h2>Courses Report</h2>
-            <p>College: ${currentCollege} | Department: ${deptName}</p>
+            <h2>Course Report</h2>
+            <p>College: ${collegeName} | Department: ${deptName}</p>
             <p>Generated: ${new Date().toLocaleString()} | Total: ${currentDeptCourses.length} courses</p>
             <table>
                 <thead><tr><th>Course Number</th><th>Arabic Name</th><th>English Name</th></tr></thead>
@@ -784,75 +803,45 @@
         printWindow.document.close();
     }
     
-    // Main flow: College changed -> load college data -> populate departments
-    async function onCollegeChange() {
-        const collegeCode = collegeSelect.value;
+    // Event Handlers
+    function onCollegeChange() {
+        currentCollege = collegeSelect.value;
         
-        if (!collegeCode) {
-            // Reset everything
-            deptSelect.innerHTML = '<option value="">-- First select a college --</option>';
-            deptSelect.disabled = true;
-            deptHint.textContent = '';
-            allCourses = [];
+        if (!currentCollege || !isDataReady) {
+            deptGroup.style.display = 'none';
+            dataSection.classList.add('hidden-section');
+            currentCollegeCourses = [];
             currentDeptCourses = [];
             currentDeptCode = '';
-            dataSection.classList.remove('visible-section');
-            dataSection.classList.add('hidden-section');
             exportBtn.disabled = true;
             printBtn.disabled = true;
             return;
         }
         
-        currentCollege = collegeCode;
+        // Reset department selection
         currentDeptCode = '';
+        deptSelect.value = '';
         
-        // Show loading state in department dropdown
-        deptSelect.innerHTML = '<option value="">Loading departments...</option>';
-        deptSelect.disabled = true;
-        deptHint.textContent = 'Fetching course data...';
+        // Update department dropdown (instant from cache)
+        updateDepartmentDropdown();
         
-        // Hide data section while loading
-        dataSection.classList.remove('visible-section');
-        dataSection.classList.add('hidden-section');
+        // Filter courses by selected college
+        filterByCollege();
         
-        try {
-            // Load college data
-            const courses = await loadCollegeData(collegeCode);
-            allCourses = courses;
-            
-            // Update department dropdown with available departments
-            updateDepartmentDropdown(allCourses);
-            
-            // Show data section (will show empty state until department selected)
-            dataSection.classList.remove('hidden-section');
-            dataSection.classList.add('visible-section');
-            
-            // Reset current department courses
-            currentDeptCourses = [];
-            currentDeptCode = '';
-            renderTable();
-            updateStats();
-            exportBtn.disabled = true;
-            printBtn.disabled = true;
-            
-        } catch (error) {
-            console.error('Failed to load college data:', error);
-            deptSelect.innerHTML = '<option value="">Error loading data</option>';
-            deptHint.textContent = `Error: ${error.message}. Please try again.`;
-            deptSelect.disabled = true;
-            allCourses = [];
-            currentDeptCourses = [];
-            statsArea.innerHTML = `Failed to load courses: ${error.message}`;
-            dataSection.classList.remove('hidden-section');
-            dataSection.classList.add('visible-section');
-        }
+        // Show data section but with prompt to select department
+        dataSection.classList.remove('hidden-section');
+        dataSection.classList.add('visible-section');
+        currentDeptCourses = [];
+        renderTable();
+        updateStats();
+        exportBtn.disabled = true;
+        printBtn.disabled = true;
     }
     
-    // Department changed -> filter courses and display
     function onDepartmentChange() {
         currentDeptCode = deptSelect.value;
         
-        if (!currentDeptCode || allCourses.length === 0) {
+        if (!currentDeptCode) {
             currentDeptCourses = [];
             renderTable();
             updateStats();
@@ -861,13 +850,16 @@
             return;
         }
         
-        loadDepartmentCourses();
+        filterByDepartment();
     }
     
-    // Event Listeners
+    // Initialize: load data in background
+    collegeSelect.disabled = true;
+    loadMasterData();
+    
+    // Event listeners
     collegeSelect.addEventListener('change', onCollegeChange);
     deptSelect.addEventListener('change', onDepartmentChange);
-    
     exportBtn.addEventListener('click', exportToExcel);
     printBtn.addEventListener('click', printView);
     
