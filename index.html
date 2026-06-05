@@ -893,32 +893,39 @@
     }
     
     function printView() {
-        var modifiedCourses = getModifiedCourses();
-        if (modifiedCourses.length === 0) {
-            alert('No modified courses to print');
-            return;
-        }
-        
-        var printWindow = window.open('', '_blank');
-        if (!printWindow) {
-            alert('Please allow pop-ups to print');
-            return;
-        }
-        
-        var rowsHtml = '';
-        for (var i = 0; i < modifiedCourses.length; i++) {
-            var c = modifiedCourses[i];
-            rowsHtml += '<tr style="background: #f0f0f0;"><td style="border:1px solid #aaa; padding:8px;"><strong>' + escapeHtml(c.courseNum) + '</strong></td><td style="border:1px solid #aaa; padding:8px; text-align:right;">' + escapeHtml(c.originalArabic) + '</td><td style="border:1px solid #aaa; padding:8px;">' + escapeHtml(c.originalEnglish) + '</td><td style="border:1px solid #aaa; padding:8px;">Original</td></tr>';
-            rowsHtml += '<tr style="background: #fff3cd;"><td style="border:1px solid #aaa; padding:8px;"><strong>' + escapeHtml(c.courseNum) + '</strong></td><td style="border:1px solid #aaa; padding:8px; text-align:right;">' + escapeHtml(c.currentArabic) + '</td><td style="border:1px solid #aaa; padding:8px;">' + escapeHtml(c.currentEnglish) + '</td><td style="border:1px solid #aaa; padding:8px;">Modified</td></tr>';
-            rowsHtml += '<tr style="height: 8px;"><td colspan="4" style="border: none;"></td></tr>';
-        }
-        
-        var collegeName = collegeSelect.options[collegeSelect.selectedIndex]?.text || currentCollege;
-        var deptName = deptSelect.options[deptSelect.selectedIndex]?.text || currentDeptCode;
-        
-        printWindow.document.write('<!DOCTYPE html><html><head><title>Modified Courses - ' + collegeName + ' - ' + deptName + '</title><style>body { font-family: Arial, sans-serif; margin: 20px; } table { border-collapse: collapse; width: 100%; } th, td { border: 1px solid #aaa; padding: 8px; text-align: left; vertical-align: top; } th { background: #1e2f3f; color: white; } @media print { button { display: none; } }</style></head><body><h2>Course Modification Report</h2><p>College: ' + collegeName + ' | Department: ' + deptName + '</p><p>Generated: ' + new Date().toLocaleString() + ' | Total Modified Courses: ' + modifiedCourses.length + '</p><table><thead><tr><th width="15%">Course Number</th><th width="35%">Arabic Name</th><th width="35%">English Name</th><th width="15%">Version</th></tr></thead><tbody>' + rowsHtml + '</tbody></table><script>window.onload = function() { window.print(); };<\/script></body></html>');
-        printWindow.document.close();
+    var modifiedCourses = getModifiedCourses();
+    if (modifiedCourses.length === 0) {
+        alert('No modified courses to print');
+        return;
     }
+    
+    var printWindow = window.open('', '_blank');
+    if (!printWindow) {
+        alert('Please allow pop-ups to print');
+        return;
+    }
+    
+    var rowsHtml = '';
+    for (var i = 0; i < modifiedCourses.length; i++) {
+        var c = modifiedCourses[i];
+        rowsHtml += '<tr style="background: #f0f0f0;"><td style="border:1px solid #aaa; padding:8px;"><strong>' + escapeHtml(c.courseNum) + '</strong></td><td style="border:1px solid #aaa; padding:8px; text-align:right;">' + escapeHtml(c.originalArabic) + '</td><td style="border:1px solid #aaa; padding:8px;">' + escapeHtml(c.originalEnglish) + '</td><td style="border:1px solid #aaa; padding:8px;">Original</td></tr>';
+        rowsHtml += '<tr style="background: #fff3cd;"><td style="border:1px solid #aaa; padding:8px;"><strong>' + escapeHtml(c.courseNum) + '</strong></td><td style="border:1px solid #aaa; padding:8px; text-align:right;">' + escapeHtml(c.currentArabic) + '</td><td style="border:1px solid #aaa; padding:8px;">' + escapeHtml(c.currentEnglish) + '</td><td style="border:1px solid #aaa; padding:8px;">Modified</td></tr>';
+        rowsHtml += '<tr style="height: 8px;"><td colspan="4" style="border: none;"></td></tr>';
+    }
+    
+    var collegeName = collegeSelect.options[collegeSelect.selectedIndex]?.text || currentCollege;
+    var deptName = deptSelect.options[deptSelect.selectedIndex]?.text || currentDeptCode;
+    
+    printWindow.document.write('<!DOCTYPE html><html><head><title>Modified Courses - ' + collegeName + ' - ' + deptName + '</title><style>' +
+        '* { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; } ' +
+        'body { font-family: Arial, sans-serif; margin: 20px; } ' +
+        'table { border-collapse: collapse; width: 100%; } ' +
+        'th, td { border: 1px solid #aaa; padding: 8px; text-align: left; vertical-align: top; } ' +
+        'th { background: #1e2f3f !important; color: white !important; } ' +
+        '@media print { button { display: none; } } ' +
+    '</style></head><body><h2>Course Modification Report</h2><p>College: ' + collegeName + ' | Department: ' + deptName + '</p><p>Generated: ' + new Date().toLocaleString() + ' | Total Modified Courses: ' + modifiedCourses.length + '</p><table><thead><tr><th width="15%">Course Number</th><th width="35%">Arabic Name</th><th width="35%">English Name</th><th width="15%">Version</th></tr></thead><tbody>' + rowsHtml + '</tbody></table><script>window.onload = function() { window.print(); };<\/script></body></html>');
+    printWindow.document.close();
+}
     
     function onCollegeChange() {
         currentCollege = collegeSelect.value;
